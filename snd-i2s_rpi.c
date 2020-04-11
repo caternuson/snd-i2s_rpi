@@ -61,7 +61,7 @@ static struct asoc_simple_card_info default_snd_rpi_simple_card_info = {
 };
 
 static struct platform_device default_snd_rpi_simple_card_device = {
-	.name = "snd_rpi_i2s_card", //module alias
+	.name = "asoc-simple-card", //module alias
 	.id = 0,
 	.num_resources = 0,
 	.dev = {
@@ -70,8 +70,8 @@ static struct platform_device default_snd_rpi_simple_card_device = {
 	},
 };
 
-static char *pri_platform = "3f203000.i2s";
-static char *alt_platform = "20203000.i2s";
+//static char *pri_platform = "fe203000.i2s";
+//static char *alt_platform = "20203000.i2s";
 
 static struct asoc_simple_card_info card_info;
 static struct platform_device card_device;
@@ -83,16 +83,33 @@ int i2s_rpi_init(void)
 	int ret;
 
 	printk(KERN_INFO "snd-i2s_rpi: Version %s\n", SND_I2S_RPI_VERSION);
-
+/*
 	card_platform = pri_platform;
 	if (rpi_platform_generation == 0) {
 		card_platform = alt_platform;
 	}
+*/
+        switch (rpi_platform_generation) {
+          case 0:
+            // Pi Zero
+            card_platform = "20203000.i2s";
+            break;
+          case 1:
+            // Pi 2 and 3
+            card_platform = "3f203000.i2s";
+            break;
+          case 2:
+            // Pi 4
+            card_platform = "fe203000.i2s";
+            break;
+          default:
+            card_platform = "3f203000.i2s";
+        }
 
 	printk(KERN_INFO "snd-i2s_rpi: Setting platform to %s\n", card_platform);
 
 	ret = request_module(dmaengine);
-	// pr_alert("request module load '%s': %d\n",dmaengine, ret);
+	pr_alert("request module load '%s': %d\n",dmaengine, ret);
 
 	card_info = default_snd_rpi_simple_card_info;
 	card_info.platform = card_platform;
@@ -103,7 +120,7 @@ int i2s_rpi_init(void)
 
 	ret = platform_device_register(&card_device);
 
-	//pr_alert("register platform device '%s': %d\n",snd_rpi_simple_card_device.name, ret);
+	pr_alert("register platform device '%s': %d\n",default_snd_rpi_simple_card_device.name, ret);
 
 	return 0;
 }
@@ -112,7 +129,7 @@ void i2s_rpi_exit(void)
 {
 	// you'll have to sudo modprobe -r the card & codec drivers manually (first?)
 	platform_device_unregister(&card_device);
-	//pr_alert("i2s mic module unloaded\n");
+	pr_alert("i2s mic module unloaded\n");
 }
 
 
